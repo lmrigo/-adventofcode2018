@@ -1,11 +1,18 @@
 var input = [
-  `abcdef
-  bababc
-  abbcde
-  abcccd
-  aabcdd
-  abcdee
-  ababab`,
+`abcdef
+bababc
+abbcde
+abcccd
+aabcdd
+abcdee
+ababab`,
+`abcde
+fghij
+klmno
+pqrst
+fguij
+axcye
+wvxyz`,
   puzzleInput
 ]
 
@@ -45,11 +52,39 @@ var day2 = function() {
 var day2Part2 = function () {
 
   for (var i = 0; i < input.length; i++) {
+    var ids = input[i].split(/\s+/)
+    var idLength = ids[0].length
 
-    // console.log()
+    var ida, idb
+    // find boxes that differ by 1 character
+    for (var idi = 0; idi < ids.length; idi++) {
+      var curId = ids[idi]
+      for (var idj = idi+1; idj < ids.length; idj++) {
+        var score = 0
+        var a = ids[idi], b = ids[idj]
+        for (var c = 0; c < a.length; c++) {
+          if (a[c] === b[c]) {
+            score++
+          }
+        }
+        if (score === (idLength-1)) {
+          // console.log('highscore: ',a,b,score)
+          ida = a, idb = b
+        }
+      }
+    }
+    // print the characters that are the same
+    var commonString = ''
+    for (var c = 0; c < ida.length; c++) {
+      if (ida[c] === idb[c]) {
+        commonString += ida[c]
+      }
+    }
+
+    // console.log(commonString)
     $('#part2').append(input[i])
       .append('<br>&emsp;')
-      .append()
+      .append(commonString)
       .append('<br>')
   }
 
