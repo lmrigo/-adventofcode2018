@@ -124,11 +124,97 @@ var day4 = function() {
 var day4Part2 = function () {
 
   for (var i = 0; i < input.length; i++) {
+    var logs = input[i].split(/\n/)
+    var guards = {}
+    var days = {}
 
-    // console.log()
+    for (var l = 0; l < logs.length; l++) {
+      var lin = logs[l].split(/\s+/)
+      var date = lin[0].substr(1)
+      var time = lin[1].substr(0, lin[1].length-1)
+      if (time.startsWith('23:')) { // normalize dates
+        var aux = new Date(date)
+        aux.setDate(aux.getDate() + 1)
+        date = aux.toISOString().substr(0,10)
+        time = '00:-1' // avoid conflict with actions on 00:00
+      }
+      time = time.substr(3)
+      if (lin[2] === 'Guard') {
+        var gNum = lin[3]
+        if (guards[gNum] === undefined) {
+          guards[gNum] = {}
+        }
+        if (guards[gNum][date] === undefined) {
+          guards[gNum][date] = {}
+        }
+        guards[gNum][date][time] = 'begin'
+      } else {
+        var action = (lin[2] === 'falls') ? 'sleep' : 'wakeup'
+        if (days[date] === undefined) {
+          days[date] = {}
+        }
+        days[date][time] = action
+      }
+    }
+
+    //assign days to guards
+    $.each(Object.keys(days), (didx, day) => {
+      var gNum = Object.keys(guards).find((g) => {
+        return guards[g][day] !== undefined
+      })
+      $.each(Object.keys(days[day]), (tidx, time) => {
+        guards[gNum][day][time] = days[day][time]
+      })
+    })
+    //console.log(guards)
+    // console.log(days)
+
+    // calculate the minute spent sleeping
+    $.each(guards, (gidx, guard) => {
+      guard.minutes = []
+      for (var m = 0; m < 60; m++) {
+        guard.minutes[m] = 0
+      }
+      $.each(Object.keys(guard), (didx, day) => {
+        if (day === 'minutes') { return true }
+        var timestamps = Object.keys(guard[day]).sort()
+        // first should always be "begin"
+        for (var t = 1; t < timestamps.length; t=t+2) {
+          for (var m = Number(timestamps[t]); m < Number(timestamps[t+1]); m++) {
+            guard.minutes[m]++
+          }
+        }
+      })
+    })
+    // console.log(guards)
+
+    // calculate the most frequently slept minute
+    $.each(guards, (gidx, guard) => {
+      var maxVal = -1
+      var maxIdx = -1
+      for (var m = 0; m < guard.minutes.length; m++) {
+        if (guard.minutes[m] > maxVal) {
+          maxVal = guard.minutes[m]
+          maxIdx = m
+        }
+      }
+      guard.sleepMinute = maxIdx
+      guard.sleepMinuteValue = maxVal
+    })
+    // console.log(guards)
+
+    // find the guard with the highest freq-minute
+    var sonecaId = Object.keys(guards).reduce((acc, val) => {
+      return (guards[acc].sleepMinuteValue > guards[val].sleepMinuteValue) ? acc : val
+    })
+    // console.log(sonecaId)
+
+    var result = Number(sonecaId.substr(1)) * guards[sonecaId].sleepMinute
+
+    // console.log(result)
     $('#part2').append(input[i])
       .append('<br>&emsp;')
-      .append()
+      .append(result)
       .append('<br>')
   }
 
