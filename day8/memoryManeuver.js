@@ -59,11 +59,48 @@ var day8 = function() {
 var day8Part2 = function () {
 
   for (var i = 0; i < input.length; i++) {
-    
+    var numbers = $.map(input[i].split(/\s+/), (x) => {
+      return Number(x)
+    })
+    // console.log(numbers)
 
+    var parseNumbers = function (parent) {
+      var node = new Node(parent)
+      node.childNum = numbers.shift()
+      node.metadataNum = numbers.shift()
+      if (node.childNum > 0) {
+        for (var c = 0; c < node.childNum; c++) {
+          node.children.push(parseNumbers(node))
+        }
+      }
+      for (var m = 0; m < node.metadataNum; m++) {
+        node.metadata.push(numbers.shift())
+      }
+      return node
+    }
+    var root = parseNumbers(null)
+    // console.log(root)
+
+    var calcNodeValues = function (node) {
+      var value = 0
+      if (node.children.length <= 0) {
+        value = node.metadata.reduce((acc, val) => {
+          return acc + val
+        }, 0)
+      } else {
+        $.each(node.metadata, (idx, meta) => {
+          if (meta > 0 && node.children[meta-1] !== undefined) {
+            value += calcNodeValues(node.children[meta-1])
+          }
+        })
+      }
+      return value 
+    }
+    var nodeValue = calcNodeValues(root)
+    
     $('#part2').append(input[i])
       .append('<br>&emsp;')
-      .append()
+      .append(nodeValue)
       .append('<br>')
   }
 
@@ -76,20 +113,3 @@ $(function (){
   day8Part2()
   $('#main').append('<br>')
 })
-
-
-// var root = {
-//   childNum: numbers.shift(),
-//   metadataNum: numbers.shift(),
-//   metadata: [],
-//   children: []
-// }
-// var metadataIdx = numbers.length - root.metadataNum
-// root.metadata = numbers.splice(metadataIdx, root.metadataNum)
-// // console.log(root)
-// var prevNode = root
-// var childSizes = numbers.length / root.childNum
-// var nextNumbers = 
-// while (nextNumbers.length > 0) {
-
-// }
