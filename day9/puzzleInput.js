@@ -1,0 +1,1 @@
+var puzzleInput = '418 players; last marble is worth 71339 points';
