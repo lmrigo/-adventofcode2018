@@ -33,8 +33,9 @@ var day9 = function() {
       if ((nextVal % 23) === 0) {
         idx = idx - 7
         if (idx <= 0) {
-          console.log('pediu pra parar parou', idx, rem[0], nextVal)
+          // console.log('pediu pra parar parou', idx, rem[0], nextVal)
           idx += circle.length
+          // por algum motivo o splice não da o resultado certo com índice negativo, apesar de funcionar
         }
         var rem = circle.splice(idx,1)
         players[p] += nextVal + rem[0]
@@ -60,7 +61,6 @@ var day9 = function() {
     // var winner = players.indexOf(highScore) + 1
     // console.log(winner)
 
-    // 428546 too high
     $('#day9').append(input[i])
       .append('<br>&emsp;')
       .append(highScore)
@@ -78,10 +78,54 @@ var printCircle = function(circle, idx) {
 var day9Part2 = function () {
 
   for (var i = 0; i < input.length; i++) {
+  // for (var i = 0; i < 1; i++) {
+    if (i>0) { i = input.length-1 } //skip to puzzle input
+    var game = input[i].split(/\s+/)
+    var numPlayers = Number(game[0])
+    var lastMarbleVal = Number(game[6])*100
+    // console.log(numPlayers, lastMarbleVal)
+    var players = []
+    for (var p = 0; p < numPlayers; p++) {
+      players[p] = 0
+    }
+
+    var circle = new LinkedList()
+    circle.push(0)
+    circle.push(1)
+    var p = 0
+    var idx = 0
+    var nextVal = 2
+    var n = circle.last // current node
+    // console.log(circle.toString())
+    while (nextVal < lastMarbleVal) {
+      if ((nextVal % 23) === 0) {
+        // left 7
+        for (var l = 0; l < 7; l++) {
+          n = n.prev === null ? circle.last : n.prev
+        }
+        var rem = n.val
+        players[p] += nextVal + rem
+        var next = n.next
+        circle.remove(n)
+        n = next
+      } else {
+        // right 2
+        n = n.next === null ? circle.first : n.next
+        n = circle.insert(nextVal, n)
+      }
+      // console.log(p+1, idx, nextVal, printCircle(circle,idx))
+      p = ++p % numPlayers
+      nextVal++
+      // console.log(circle.toString())
+    }
+
+    var highScore = players.reduce((acc, val) => {
+      return acc > val ? acc : val
+    })
     
     $('#part2').append(input[i])
       .append('<br>&emsp;')
-      .append()
+      .append(highScore)
       .append('<br>')
   }
 
@@ -89,7 +133,7 @@ var day9Part2 = function () {
 
 $(function (){
   $('#main').append('<div id="day9"><h2>day #9</h2></div>')
-  day9()
+  // day9()
   $('#main').append('<br><div id="part2"><h2>part 2</h2></div>')
   day9Part2()
   $('#main').append('<br>')
