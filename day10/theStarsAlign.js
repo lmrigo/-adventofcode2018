@@ -139,10 +139,53 @@ var printGrid = function(grid,startX=0, startY=0, endX, endY) {
 var day10Part2 = function () {
 
   for (var i = 0; i < input.length; i++) {
+    var entries = input[i].split(/\n+/)
+    var stars = []
+    var minX = 0
+    var minY = 0
+    var maxX = 0
+    var maxY = 0
+    $.each(entries, (idx, entry) => {
+      var pos = entry.substring(entry.indexOf('<')+1, entry.indexOf('>')).split(', ')
+      var vel = entry.substring(entry.lastIndexOf('<')+1, entry.lastIndexOf('>')).split(', ')
+      var star = {
+        posx: Number(pos[0]),
+        posy: Number(pos[1]),
+        velx: Number(vel[0]),
+        vely: Number(vel[1])
+      }
+      if (star.posx < minX) { minX = star.posx -1 }
+      if (star.posy < minY) { minY = star.posy -1 }
+      if (star.posx > maxX) { maxX = star.posx +1 }
+      if (star.posy > maxY) { maxY = star.posy +1 }
+      stars.push(star)
+    })
+
+    // iterate until all stars fit in X blocks height (height of a letter)
+    var blocksize = i===0 ? 8 : 10
+
+    var limit = 100000
+    var t = 0
+    while (t++ < limit) {
+      var curMinY = maxY
+      var curMaxY = minY
+      $.each(stars, (idx, s) => {
+        s.posx += s.velx
+        s.posy += s.vely
+        if (s.posy < curMinY) { curMinY = s.posy }
+        if (s.posy > curMaxY) { curMaxY = s.posy }
+      })
+      if (curMaxY - curMinY <= blocksize) {
+        // stars aligned
+        // time elapsed on t
+        break
+      }
+    }
+    var timeElapsed = t
 
     $('#part2').append(input[i])
       .append('<br>&emsp;')
-      .append()
+      .append(timeElapsed)
       .append('<br>')
   }
 
