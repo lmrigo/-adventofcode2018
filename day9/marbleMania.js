@@ -49,7 +49,7 @@ var day9 = function() {
       // console.log(p+1, idx, nextVal, printCircle(circle,idx))
       p = ++p % numPlayers
     }
-    
+
     // console.log(rems)
     // console.log(idxs)
     // console.log(circle)
@@ -122,7 +122,7 @@ var day9Part2 = function () {
     var highScore = players.reduce((acc, val) => {
       return acc > val ? acc : val
     })
-    
+
     $('#part2').append(input[i])
       .append('<br>&emsp;')
       .append(highScore)
@@ -133,7 +133,7 @@ var day9Part2 = function () {
 
 $(function (){
   $('#main').append('<div id="day9"><h2>day #9</h2></div>')
-  // day9()
+  day9()
   $('#main').append('<br><div id="part2"><h2>part 2</h2></div>')
   day9Part2()
   $('#main').append('<br>')
