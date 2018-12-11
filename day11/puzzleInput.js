@@ -1,0 +1,1 @@
+var puzzleInput = '8199';
