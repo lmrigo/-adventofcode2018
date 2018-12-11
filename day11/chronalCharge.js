@@ -80,7 +80,7 @@ var printGrid = function(grid,startX=0, startY=0, endX, endY) {
   var str = ''
   for (var y = startY; y < endY; y++) {
     for (var x = startX; x < endX; x++) {
-      str += grid[x][y]
+      str += grid[x][y]+','
     }
     str += '\n'
   }
@@ -90,11 +90,71 @@ var printGrid = function(grid,startX=0, startY=0, endX, endY) {
 
 var day11Part2 = function () {
 
-  for (var i = 0; i < input.length; i++) {
+  for (var i = 6; i < input.length; i++) {
+    var serialNumber = Number(input[i])
+
+    var gridSize = 300
+    var grid = []
+    for (var x = 1; x <= gridSize; x++) {
+      grid[x] = []
+      for (var y = 1; y <= gridSize; y++) {
+        var powerLevel = 0
+        // rackID = x+10
+        var rackID = x + 10
+        // rackID * y
+        powerLevel = rackID * y
+        // + serial number (input)
+        powerLevel += serialNumber
+        // * rackID
+        powerLevel *= rackID
+        // hundreds
+        powerLevel = Math.floor((powerLevel / 100) % 10);
+        // -5
+        powerLevel -= 5
+        grid[x][y] = powerLevel
+      }
+    }
+    // find nxn largest total power
+    var maxPower = -100
+    var maxX = -1
+    var maxY = -1
+    var maxSize = -1
+    var startingSize = 10 // min square size -1
+    var sizeLimit = 100 //max square size
+    for (var s = startingSize; s < sizeLimit; s++) {
+      for (var x = 1; x <= gridSize-s; x++) {
+        for (var y = 1; y <= gridSize-s; y++) {
+          var power = 0
+          for (var px = x; px <= x+s; px++) {
+            for (var py = y; py <= y+s; py++) {
+              power += grid[px][py]
+            }
+          }
+          if (power > maxPower) {
+            maxPower = power
+            maxX = x
+            maxY = y
+            maxSize = s+1
+          }
+        }
+      }
+    }
+    var largestTotalPower = maxX+','+maxY+','+maxSize
+    // console.log(maxPower,largestTotalPower,sizeLimit)
+    //maxPow,output,sizeLimit
+    //100 "235,275,11" 11
+    //100 "235,275,11" 12
+    //113 "235,273,16" 16
+    //119 "234,272,18" 32
+    //119 "234,272,18" 64
+    //-100 "-1,-1,-1" 128-63
+    //-100 "-1,-1,-1" 256-127
+    //-100 "-1,-1,-1" 300-255
+    //119 "234,272,18" 100-10
 
     $('#part2').append(input[i])
       .append('<br>&emsp;')
-      .append()
+      .append(largestTotalPower)
       .append('<br>')
   }
 
