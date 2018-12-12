@@ -175,6 +175,7 @@ var day12Part2 = function () {
     var last = stateString(state,minIdx,maxIdx).lastIndexOf('#')
     // console.log(first,last) // 5, 191
     // there's always 186 indexes from the first to the last
+    // starting from gen 134
 
     // sum all plants indexes
     var idxs = []
