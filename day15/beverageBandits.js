@@ -18,13 +18,57 @@ var input = [
 #.......#
 #G..G..G#
 #########`,
-`#######   
+`#######
 #.G...#
 #...EG#
 #.#.#G#
 #..G#E#
 #.....#
-#######`,
+#######`, // 27730
+// `#######
+// #..G..#
+// #...G.#
+// #.#G#G#
+// #...#E#
+// #.....#
+// #######`,
+`#######
+#G..#E#
+#E#E.E#
+#G.##.#
+#...#E#
+#...E.#
+#######`, // 36334
+`#######
+#E..EG#
+#.#G.E#
+#E.##E#
+#G..#.#
+#..E#.#
+#######`, // 39514
+`#######
+#E.G#.#
+#.#G..#
+#G.#.G#
+#G..#.#
+#...E.#
+#######`, // 27755
+`#######
+#.E...#
+#.#..G#
+#.###.#
+#E#G#G#
+#...#G#
+#######`, // 28944
+`#########
+#G......#
+#.E.#...#
+#..##..G#
+#...##..#
+#...#...#
+#.G...G.#
+#.....G.#
+#########`, // 18740
  // puzzleInput
 ]
 
@@ -57,16 +101,33 @@ var day15 = function() {
 
     // TODO: for some reason attacks are too strong. elf must die at round 23
     // if refactoring, start by creating a global "units"
-    var limit = 15
+    var queue = []
+    queue.push(...units)
+    var limit = 100
     var round = 0
-    while (round++ < limit) {
-      // console.log(units)
-      units.sort((a,b) => {
+    while (round++ < limit && queue.length > 0) {
+      // console.log(queue)
+      queue.sort((a,b) => {
         return (a.x - b.x) !== 0 ? (a.x - b.x) : (a.y - b.y)
       })
       var remaining = []
-      while (units.length > 0) {
-        var u = units.shift()
+      while (queue.length > 0) {
+        // check if game has ended
+        var gobs = units.reduce((acc, val) => {
+          return acc + (val.type === 'G')
+        }, 0)
+        var elves = units.reduce((acc, val) => {
+          return acc + (val.type === 'E')
+        }, 0)
+        if (gobs === 0 || elves === 0) {
+          // game over
+          round-=2 // not a full round
+          queue = [] // clear the queue
+          remaining = []
+          break
+        }
+        // play the unit
+        var u = queue.shift()
         if (!canAttack(u)) { // move
           // find possible moves
           var neighbours = []
@@ -88,15 +149,9 @@ var day15 = function() {
             continue
           }
           // find targets
-          var tus = units.filter((other) => {
+          var targets = units.filter((other) => {
             return other.type !== u.type
           })
-          var trems = remaining.filter((other) => {
-            return other.type !== u.type
-          })
-          var targets = []
-          targets.push(...tus)
-          targets.push(...trems)
           if (targets.length === 0) {
             // finished
             break
@@ -125,7 +180,7 @@ var day15 = function() {
             var initialState = {'x': r.x, 'y':r.y, 'steps': 0, 'trace': '!'+r.x+','+r.y}
             var history = []
             var nextStates = [initialState]
-            var timeout = 10000
+            var timeout = 10000000
             while (nextStates.length > 0 && --timeout) {
               var state = nextStates.pop()
               if (history[state.x] === undefined) { // record how many steps to this point
@@ -181,52 +236,43 @@ var day15 = function() {
           if ((Math.abs(u.x - nearest.x) + Math.abs(u.y - nearest.y)) !== 1) {
             console.log('pediu pra parar parou')
           }
+          // get model index
+          var uidx = units.findIndex((m) => {
+            return m.x === u.x && m.y === u.y
+          })
           // effectively move on grid
           grid[u.x][u.y] = '.'
           u.x = nearest.x
           u.y = nearest.y
           grid[u.x][u.y] = u.type
           remaining.push(u)
+          // update model
+          units[uidx].x = u.x
+          units[uidx].y = u.y
         } // end move
 
         if (canAttack(u)) { // might be able to attack after has moved
           var targets = []
-          var tus = []
-          var trems = []
           if ('GE'.includes(grid[u.x+1][u.y]) && grid[u.x+1][u.y] !== u.type) { // up
-            tus.push(units.find((t) => {
-              return (t.x === u.x+1) && (t.y === u.y) && (t.type !== u.type)
-            }))
-            trems.push(remaining.find((t) => {
+            targets.push(units.find((t) => {
               return (t.x === u.x+1) && (t.y === u.y) && (t.type !== u.type)
             }))
           }
           if ('GE'.includes(grid[u.x-1][u.y]) && grid[u.x-1][u.y] !== u.type) { // down
-            tus.push(units.find((t) => {
-              return (t.x === u.x-1) && (t.y === u.y) && (t.type !== u.type)
-            }))
-            trems.push(remaining.find((t) => {
+            targets.push(units.find((t) => {
               return (t.x === u.x-1) && (t.y === u.y) && (t.type !== u.type)
             }))
           }
           if ('GE'.includes(grid[u.x][u.y+1]) && grid[u.x][u.y+1] !== u.type) { // right
-            tus.push(units.find((t) => {
-              return (t.x === u.x) && (t.y === u.y+1) && (t.type !== u.type)
-            }))
-            trems.push(remaining.find((t) => {
+            targets.push(units.find((t) => {
               return (t.x === u.x) && (t.y === u.y+1) && (t.type !== u.type)
             }))
           }
           if ('GE'.includes(grid[u.x][u.y-1]) && grid[u.x][u.y-1] !== u.type) { // left
-            tus.push(units.find((t) => {
-              return (t.x === u.x) && (t.y === u.y-1) && (t.type !== u.type)
-            }))
-            trems.push(remaining.find((t) => {
+            targets.push(units.find((t) => {
               return (t.x === u.x) && (t.y === u.y-1) && (t.type !== u.type)
             }))
           }
-          targets.push(...tus.filter((t)=>{return t !== undefined}))
-          targets.push(...trems.filter((t)=>{return t !== undefined}))
           // sort targets by hp,x,y
           targets.sort((a,b) => {
             if (a.hp - b.hp !== 0) {
@@ -237,37 +283,42 @@ var day15 = function() {
           })
           // find target in arrays
           var atk = targets[0]
-          var atkIdxU = units.findIndex((a) => {
+          var atkIdx = units.findIndex((a) => {
             return atk.x === a.x && atk.y === a.y
           })
-          if (atkIdxU >= 0) {
+          if (atkIdx >= 0) {
             // subtract u.attack from target.hp
-            units[atkIdxU].hp -= u.attack
-            // if target.hp <= 0 then remove from units/remaining and grid
-            if (units[atkIdxU].hp <= 0) {
-              grid[units[atkIdxU].x][units[atkIdxU].y] = '.'
-              units.splice(atkIdxU,1)
-            }
-          } else {
-            var atkIdxR = remaining.findIndex((a) => {
-              return atk.x === a.x && atk.y === a.y
-            })
-            if (atkIdxR >= 0) {
-              // subtract u.attack from target.hp
-              remaining[atkIdxR].hp -= u.attack
-              // if target.hp <= 0 then remove from units/remaining and grid
-              if (remaining[atkIdxR].hp <= 0) {
-                grid[units[atkIdxR].x][units[atkIdxR].y] = '.'
-                remaining.splice(atkIdxR,1)
+            units[atkIdx].hp -= u.attack
+            // if target.hp <= 0 then remove from units and grid
+            if (units[atkIdx].hp <= 0) {
+              grid[units[atkIdx].x][units[atkIdx].y] = '.'
+              units.splice(atkIdx,1)
+              // remove unit from queue/remaining too
+              var qidx = queue.findIndex((a) => {
+                return atk.x === a.x && atk.y === a.y
+              })
+              if (qidx >= 0) {
+                queue.splice(qidx,1)
+              }
+              var ridx = remaining.findIndex((a) => {
+                return atk.x === a.x && atk.y === a.y
+              })
+              if (ridx >= 0) {
+                remaining.splice(ridx,1)
               }
             }
+          } else {
+            console.log('pediu pra parar parou atk')
           }
-          remaining.push(u)
-        } // end atk
+          if (!remaining.includes(u)){
+            remaining.push(u)
+          }
+        } // end attack
 
       } // end round
-      units.push(...remaining)
+      queue.push(...remaining)
       // printGrid(grid)
+      // console.log(units)
     }
     if (round >= limit) {
       console.log('round limit exceeded')
@@ -278,7 +329,7 @@ var day15 = function() {
     var outcome = round * units.reduce((acc, val) => {
       return acc + val.hp
     }, 0)
-    console.log(outcome)
+    console.log(round, outcome)
 
     $('#day15').append(input[i])
       .append('<br>&emsp;')
