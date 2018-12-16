@@ -1,0 +1,369 @@
+var input = [
+`#######
+#.E...#
+#.....#
+#...G.#
+#######`,
+`#######
+#E..G.#
+#...#.#
+#.G.#G#
+#######`,
+`#########
+#G..G..G#
+#.......#
+#.......#
+#G..E..G#
+#.......#
+#.......#
+#G..G..G#
+#########`,
+`#######   
+#.G...#
+#...EG#
+#.#.#G#
+#..G#E#
+#.....#
+#######`,
+ // puzzleInput
+]
+
+var grid = []
+
+var day15 = function() {
+
+  for (var i = 0; i < input.length; i++) {
+    i = i==0? 3 : i
+    var lines = input[i].split(/\n+/)
+    grid = []
+    var units = []
+    for (var gx = 0; gx < lines.length; gx++) {
+      grid[gx] = []
+      var cells = lines[gx].split('')
+      for (var gy = 0; gy < cells.length; gy++) {
+        grid[gx][gy] = cells[gy]
+        if ('GE'.includes(cells[gy])) {
+          units.push({
+            'x': gx,
+            'y': gy,
+            'type': cells[gy],
+            'attack': 3,
+            'hp': 200
+          })
+        }
+      }
+    }
+    // console.log(grid)
+
+    // TODO: for some reason attacks are too strong. elf must die at round 23
+    // if refactoring, start by creating a global "units"
+    var limit = 15
+    var round = 0
+    while (round++ < limit) {
+      // console.log(units)
+      units.sort((a,b) => {
+        return (a.x - b.x) !== 0 ? (a.x - b.x) : (a.y - b.y)
+      })
+      var remaining = []
+      while (units.length > 0) {
+        var u = units.shift()
+        if (!canAttack(u)) { // move
+          // find possible moves
+          var neighbours = []
+          if (grid[u.x+1][u.y] === '.') {
+            neighbours.push({x: u.x+1, y: u.y})
+          }
+          if (grid[u.x-1][u.y] === '.') {
+            neighbours.push({x: u.x-1, y: u.y})
+          }
+          if (grid[u.x][u.y+1] === '.') {
+            neighbours.push({x: u.x, y: u.y+1})
+          }
+          if (grid[u.x][u.y-1] === '.') {
+            neighbours.push({x: u.x, y: u.y-1})
+          }
+          if (neighbours.length === 0) {
+            // can't move
+            remaining.push(u)
+            continue
+          }
+          // find targets
+          var tus = units.filter((other) => {
+            return other.type !== u.type
+          })
+          var trems = remaining.filter((other) => {
+            return other.type !== u.type
+          })
+          var targets = []
+          targets.push(...tus)
+          targets.push(...trems)
+          if (targets.length === 0) {
+            // finished
+            break
+          }
+          // find targets in range
+          var inRange = []
+          $.each(targets, (tidx, t) => {
+            if (grid[t.x+1][t.y] === '.') {
+              inRange.push({x: t.x+1, y: t.y})
+            }
+            if (grid[t.x-1][t.y] === '.') {
+              inRange.push({x: t.x-1, y: t.y})
+            }
+            if (grid[t.x][t.y+1] === '.') {
+              inRange.push({x: t.x, y: t.y+1})
+            }
+            if (grid[t.x][t.y-1] === '.') {
+              inRange.push({x: t.x, y: t.y-1})
+            }
+          })
+          // filter by those that are reachable
+          // by calculating the distance to it
+          var nearStates = []
+          $.each(inRange, (ridx, r) => {
+            var shortestPath = 1000000000
+            var initialState = {'x': r.x, 'y':r.y, 'steps': 0, 'trace': '!'+r.x+','+r.y}
+            var history = []
+            var nextStates = [initialState]
+            var timeout = 10000
+            while (nextStates.length > 0 && --timeout) {
+              var state = nextStates.pop()
+              if (history[state.x] === undefined) { // record how many steps to this point
+                history[state.x] = []
+              }
+              if (history[state.x][state.y] === undefined) {
+                history[state.x][state.y] = state.steps
+              } else if ( (history[state.x][state.y] < state.steps) ) { // drop paths longer than history
+                continue
+              }
+              var match = neighbours.find((n) => {
+                return n.x === state.x && n.y === state.y
+              })
+              if (match) {
+                shortestPath = state.steps < shortestPath ? state.steps : shortestPath
+                nearStates.push(state)
+              } else {
+                //generate next states
+                var genMoves = []
+                $.each(generateMoves(state), function(idx, gm) {
+                  if (gm.steps <= shortestPath) { // include only paths shorter or equal than already found
+                    var remSteps = shortestPath - gm.steps
+                    var currentToDest = (Math.abs(u.x - gm.x) + Math.abs(u.y - gm.y))
+                    if (currentToDest <= remSteps+1) { // only add if there's enough steps to reach in a straight path
+                      genMoves.push(gm)
+                    }
+                  }
+                })
+                nextStates.push(...genMoves)
+              }
+            }
+            if (!timeout) {
+              console.log('timeout!')
+            }
+          })
+
+          // Nearest
+          if (nearStates.length === 0) {
+            // no path found. stand still
+            remaining.push(u)
+            continue
+          }
+          nearStates.sort((a,b) => {
+            if (a.steps - b.steps !== 0) {
+              return a.steps - b.steps
+            } else {
+              return (a.x - b.x) !== 0 ? (a.x - b.x) : (a.y - b.y)
+            }
+          })
+          // Chosen
+          var nearest = nearStates[0]
+
+          if ((Math.abs(u.x - nearest.x) + Math.abs(u.y - nearest.y)) !== 1) {
+            console.log('pediu pra parar parou')
+          }
+          // effectively move on grid
+          grid[u.x][u.y] = '.'
+          u.x = nearest.x
+          u.y = nearest.y
+          grid[u.x][u.y] = u.type
+          remaining.push(u)
+        } // end move
+
+        if (canAttack(u)) { // might be able to attack after has moved
+          var targets = []
+          var tus = []
+          var trems = []
+          if ('GE'.includes(grid[u.x+1][u.y]) && grid[u.x+1][u.y] !== u.type) { // up
+            tus.push(units.find((t) => {
+              return (t.x === u.x+1) && (t.y === u.y) && (t.type !== u.type)
+            }))
+            trems.push(remaining.find((t) => {
+              return (t.x === u.x+1) && (t.y === u.y) && (t.type !== u.type)
+            }))
+          }
+          if ('GE'.includes(grid[u.x-1][u.y]) && grid[u.x-1][u.y] !== u.type) { // down
+            tus.push(units.find((t) => {
+              return (t.x === u.x-1) && (t.y === u.y) && (t.type !== u.type)
+            }))
+            trems.push(remaining.find((t) => {
+              return (t.x === u.x-1) && (t.y === u.y) && (t.type !== u.type)
+            }))
+          }
+          if ('GE'.includes(grid[u.x][u.y+1]) && grid[u.x][u.y+1] !== u.type) { // right
+            tus.push(units.find((t) => {
+              return (t.x === u.x) && (t.y === u.y+1) && (t.type !== u.type)
+            }))
+            trems.push(remaining.find((t) => {
+              return (t.x === u.x) && (t.y === u.y+1) && (t.type !== u.type)
+            }))
+          }
+          if ('GE'.includes(grid[u.x][u.y-1]) && grid[u.x][u.y-1] !== u.type) { // left
+            tus.push(units.find((t) => {
+              return (t.x === u.x) && (t.y === u.y-1) && (t.type !== u.type)
+            }))
+            trems.push(remaining.find((t) => {
+              return (t.x === u.x) && (t.y === u.y-1) && (t.type !== u.type)
+            }))
+          }
+          targets.push(...tus.filter((t)=>{return t !== undefined}))
+          targets.push(...trems.filter((t)=>{return t !== undefined}))
+          // sort targets by hp,x,y
+          targets.sort((a,b) => {
+            if (a.hp - b.hp !== 0) {
+              return a.hp - b.hp
+            } else {
+              return (a.x - b.x) !== 0 ? (a.x - b.x) : (a.y - b.y)
+            }
+          })
+          // find target in arrays
+          var atk = targets[0]
+          var atkIdxU = units.findIndex((a) => {
+            return atk.x === a.x && atk.y === a.y
+          })
+          if (atkIdxU >= 0) {
+            // subtract u.attack from target.hp
+            units[atkIdxU].hp -= u.attack
+            // if target.hp <= 0 then remove from units/remaining and grid
+            if (units[atkIdxU].hp <= 0) {
+              grid[units[atkIdxU].x][units[atkIdxU].y] = '.'
+              units.splice(atkIdxU,1)
+            }
+          } else {
+            var atkIdxR = remaining.findIndex((a) => {
+              return atk.x === a.x && atk.y === a.y
+            })
+            if (atkIdxR >= 0) {
+              // subtract u.attack from target.hp
+              remaining[atkIdxR].hp -= u.attack
+              // if target.hp <= 0 then remove from units/remaining and grid
+              if (remaining[atkIdxR].hp <= 0) {
+                grid[units[atkIdxR].x][units[atkIdxR].y] = '.'
+                remaining.splice(atkIdxR,1)
+              }
+            }
+          }
+          remaining.push(u)
+        } // end atk
+
+      } // end round
+      units.push(...remaining)
+      // printGrid(grid)
+    }
+    if (round >= limit) {
+      console.log('round limit exceeded')
+    }
+    printGrid(grid)
+
+
+    var outcome = round * units.reduce((acc, val) => {
+      return acc + val.hp
+    }, 0)
+    console.log(outcome)
+
+    $('#day15').append(input[i])
+      .append('<br>&emsp;')
+      .append(outcome)
+      .append('<br>')
+  }
+}
+
+var printGrid = function(grid) {
+  var outString = ''
+  for (var i = 0; i < grid.length; i++) {
+    for (var j = 0; j < grid[i].length; j++) {
+      outString += grid[i][j]
+    }
+    outString += '\n'
+  }
+
+  console.log(outString)
+}
+
+var canAttack = function(u) {
+  return (
+    ('GE'.includes(grid[u.x+1][u.y]) && grid[u.x+1][u.y] !== u.type)
+    || ('GE'.includes(grid[u.x-1][u.y]) && grid[u.x-1][u.y] !== u.type)
+    || ('GE'.includes(grid[u.x][u.y+1]) && grid[u.x][u.y+1] !== u.type)
+    || ('GE'.includes(grid[u.x][u.y-1]) && grid[u.x][u.y-1] !== u.type))
+}
+
+var directions = [
+  function(state){state.y--;},
+  function(state){state.y++;},
+  function(state){state.x--;},
+  function(state){state.x++;}
+]
+var generateMoves = function(st) {
+  var moves = []
+  $.each(directions, function(idx, dirFun) {
+    var newState = cloneState(st)
+    dirFun(newState)
+    if(isValid(newState)) {
+      newState.steps++
+      newState.trace += genTrace(newState)
+      moves.push(newState)
+    }
+  })
+  return moves
+}
+
+var cloneState = function(state) {
+  var newState = {
+    'x': state.x,
+    'y': state.y,
+    'steps': state.steps,
+    'trace': state.trace
+  }
+  return newState
+}
+
+var isValid = function(st) {
+  return (0 <= st.x && st.x < grid.length) // within maze
+      && (0 <= st.y && st.y < grid[st.x].length)
+      && (grid[st.x][st.y] === '.') // is a space
+      && (!st.trace.includes(genTrace(st))) // not repeated step
+}
+
+var genTrace = function(st) {
+  return ':'+st.x+','+st.y
+}
+
+var day15Part2 = function () {
+
+  for (var i = 0; i < input.length; i++) {
+
+    $('#part2').append(input[i])
+      .append('<br>&emsp;')
+      .append()
+      .append('<br>')
+  }
+
+}
+
+$(function (){
+  $('#main').append('<div id="day15"><h2>day #15</h2></div>')
+  day15()
+  $('#main').append('<br><div id="part2"><h2>part 2</h2></div>')
+  day15Part2()
+  $('#main').append('<br>')
+})
