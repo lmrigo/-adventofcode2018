@@ -69,15 +69,16 @@ var input = [
 #.G...G.#
 #.....G.#
 #########`, // 18740
- // puzzleInput
+ puzzleInput
 ]
 
 var grid = []
 
 var day15 = function() {
 
-  for (var i = 0; i < input.length; i++) {
-    i = i==0? 3 : i
+  // for (var i = 0; i < input.length; i++) {
+  // for (var i = 3; i < input.length-1; i++) {
+  for (var i = 9; i < input.length; i++) {
     var lines = input[i].split(/\n+/)
     grid = []
     var units = []
@@ -99,8 +100,6 @@ var day15 = function() {
     }
     // console.log(grid)
 
-    // TODO: for some reason attacks are too strong. elf must die at round 23
-    // if refactoring, start by creating a global "units"
     var queue = []
     queue.push(...units)
     var limit = 100
@@ -156,32 +155,45 @@ var day15 = function() {
             // finished
             break
           }
+          targets.sort((a,b) => { // put the closesr ones first
+            var atou = (Math.abs(a.x - u.x) + Math.abs(a.y - u.y))
+            var btou = (Math.abs(b.x - u.x) + Math.abs(b.y - u.y))
+            return atou - btou
+          })
           // find targets in range
           var inRange = []
           $.each(targets, (tidx, t) => {
-            if (grid[t.x+1][t.y] === '.') {
-              inRange.push({x: t.x+1, y: t.y})
-            }
-            if (grid[t.x-1][t.y] === '.') {
-              inRange.push({x: t.x-1, y: t.y})
-            }
-            if (grid[t.x][t.y+1] === '.') {
-              inRange.push({x: t.x, y: t.y+1})
-            }
-            if (grid[t.x][t.y-1] === '.') {
-              inRange.push({x: t.x, y: t.y-1})
-            }
+            // if (grid[t.x+1][t.y] === '.') {
+            //   inRange.push({x: t.x+1, y: t.y})
+            // }
+            // if (grid[t.x-1][t.y] === '.') {
+            //   inRange.push({x: t.x-1, y: t.y})
+            // }
+            // if (grid[t.x][t.y+1] === '.') {
+            //   inRange.push({x: t.x, y: t.y+1})
+            // }
+            // if (grid[t.x][t.y-1] === '.') {
+            //   inRange.push({x: t.x, y: t.y-1})
+            // }
+            inRange.push({x: t.x, y: t.y}) // algorithm works with the target, don't need to add the adjacent
           })
           // filter by those that are reachable
           // by calculating the distance to it
           var nearStates = []
           $.each(inRange, (ridx, r) => {
+            if (nearStates.length > 0) {
+               var rtou = (Math.abs(r.x - u.x) + Math.abs(r.y - u.y))
+               if (rtou > nearStates[0].steps) { // skip if a direct path is longer than the closest so far
+                return true
+               }
+            }
             var shortestPath = 1000000000
             var initialState = {'x': r.x, 'y':r.y, 'steps': 0, 'trace': '!'+r.x+','+r.y}
             var history = []
             var nextStates = [initialState]
             var timeout = 10000000
             while (nextStates.length > 0 && --timeout) {
+              // var state = nextStates.shift()
               var state = nextStates.pop()
               if (history[state.x] === undefined) { // record how many steps to this point
                 history[state.x] = []
@@ -197,6 +209,13 @@ var day15 = function() {
               if (match) {
                 shortestPath = state.steps < shortestPath ? state.steps : shortestPath
                 nearStates.push(state)
+                nearStates.sort((a,b) => {
+                  if (a.steps - b.steps !== 0) {
+                    return a.steps - b.steps
+                  } else {
+                    return (a.x - b.x) !== 0 ? (a.x - b.x) : (a.y - b.y)
+                  }
+                })
               } else {
                 //generate next states
                 var genMoves = []
@@ -317,7 +336,7 @@ var day15 = function() {
 
       } // end round
       queue.push(...remaining)
-      // printGrid(grid)
+      printGrid(grid)
       // console.log(units)
     }
     if (round >= limit) {
