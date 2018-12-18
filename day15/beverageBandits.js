@@ -69,6 +69,10 @@ var input = [
 #.G...G.#
 #.....G.#
 #########`, // 18740
+`###########
+#G..#....G#
+###..E#####
+###########`, // 10804
  puzzleInput
 ]
 
@@ -77,8 +81,11 @@ var grid = []
 var day15 = function() {
 
   // for (var i = 0; i < input.length; i++) {
+  // for (var i = 2; i < 3; i++) {
   // for (var i = 3; i < input.length-1; i++) {
-  for (var i = 9; i < input.length; i++) {
+  // for (var i = 8; i < input.length-2; i++) {
+  // for (var i = 9; i < input.length-1; i++) {
+  for (var i = 10; i < input.length; i++) {
     var lines = input[i].split(/\n+/)
     grid = []
     var units = []
@@ -102,7 +109,7 @@ var day15 = function() {
 
     var queue = []
     queue.push(...units)
-    var limit = 100
+    var limit = 1000
     var round = 0
     while (round++ < limit && queue.length > 0) {
       // console.log(queue)
@@ -130,18 +137,10 @@ var day15 = function() {
         if (!canAttack(u)) { // move
           // find possible moves
           var neighbours = []
-          if (grid[u.x+1][u.y] === '.') {
-            neighbours.push({x: u.x+1, y: u.y})
-          }
-          if (grid[u.x-1][u.y] === '.') {
-            neighbours.push({x: u.x-1, y: u.y})
-          }
-          if (grid[u.x][u.y+1] === '.') {
-            neighbours.push({x: u.x, y: u.y+1})
-          }
-          if (grid[u.x][u.y-1] === '.') {
-            neighbours.push({x: u.x, y: u.y-1})
-          }
+          if (grid[u.x+1][u.y] === '.') { neighbours.push({x: u.x+1, y: u.y}) }
+          if (grid[u.x-1][u.y] === '.') { neighbours.push({x: u.x-1, y: u.y}) }
+          if (grid[u.x][u.y+1] === '.') { neighbours.push({x: u.x, y: u.y+1}) }
+          if (grid[u.x][u.y-1] === '.') { neighbours.push({x: u.x, y: u.y-1}) }
           if (neighbours.length === 0) {
             // can't move
             remaining.push(u)
@@ -155,78 +154,90 @@ var day15 = function() {
             // finished
             break
           }
-          targets.sort((a,b) => { // put the closesr ones first
+          targets.sort((a,b) => { // put the closer ones first
             var atou = (Math.abs(a.x - u.x) + Math.abs(a.y - u.y))
             var btou = (Math.abs(b.x - u.x) + Math.abs(b.y - u.y))
             return atou - btou
           })
           // find targets in range
           var inRange = []
-          $.each(targets, (tidx, t) => {
-            // if (grid[t.x+1][t.y] === '.') {
-            //   inRange.push({x: t.x+1, y: t.y})
-            // }
-            // if (grid[t.x-1][t.y] === '.') {
-            //   inRange.push({x: t.x-1, y: t.y})
-            // }
-            // if (grid[t.x][t.y+1] === '.') {
-            //   inRange.push({x: t.x, y: t.y+1})
-            // }
-            // if (grid[t.x][t.y-1] === '.') {
-            //   inRange.push({x: t.x, y: t.y-1})
-            // }
-            inRange.push({x: t.x, y: t.y}) // algorithm works with the target, don't need to add the adjacent
+          $.each(targets, (tidx, t) => { // only go after the 2 closest targets TODO: might be a problem
+            if (grid[t.x+1][t.y] === '.') { inRange.push({x: t.x+1, y: t.y}) }
+            if (grid[t.x-1][t.y] === '.') { inRange.push({x: t.x-1, y: t.y}) }
+            if (grid[t.x][t.y+1] === '.') { inRange.push({x: t.x, y: t.y+1}) }
+            if (grid[t.x][t.y-1] === '.') { inRange.push({x: t.x, y: t.y-1}) }
+          })
+          inRange.sort((a,b) => { // put the closer ones first
+            var atou = (Math.abs(a.x - u.x) + Math.abs(a.y - u.y))
+            var btou = (Math.abs(b.x - u.x) + Math.abs(b.y - u.y))
+            return atou - btou
           })
           // filter by those that are reachable
           // by calculating the distance to it
           var nearStates = []
           $.each(inRange, (ridx, r) => {
-            if (nearStates.length > 0) {
-               var rtou = (Math.abs(r.x - u.x) + Math.abs(r.y - u.y))
-               if (rtou > nearStates[0].steps) { // skip if a direct path is longer than the closest so far
-                return true
-               }
-            }
-            var shortestPath = 1000000000
-            var initialState = {'x': r.x, 'y':r.y, 'steps': 0, 'trace': '!'+r.x+','+r.y}
+            // if (nearStates.length > 0) {
+            //   nearStates.sort((a,b) => {
+            //     if (a.steps - b.steps !== 0) { return a.steps - b.steps
+            //     } else { return (a.x - b.x) !== 0 ? (a.x - b.x) : (a.y - b.y) }
+            //   })
+            //   var rtou = (Math.abs(r.x - u.x) + Math.abs(r.y - u.y))
+            //   if (rtou > nearStates[0].steps) { // skip if a direct path is longer than the closest so far
+            //     return true
+            //   }
+            // }
+            var shortestPath = 100 // 246 open spaces
+            var initialState = {'x': r.x, 'y':r.y, 'steps': 0, 'trace': ':'+r.x+','+r.y}
             var history = []
             var nextStates = [initialState]
-            var timeout = 10000000
+            var timeout = 100000
             while (nextStates.length > 0 && --timeout) {
-              // var state = nextStates.shift()
-              var state = nextStates.pop()
-              if (history[state.x] === undefined) { // record how many steps to this point
-                history[state.x] = []
+              if (timeout % 50000 === 0) {
+                console.log(shortestPath, nextStates.length)
               }
+              var state = nextStates.shift()
+              // var state = nextStates.pop()
+              if (history[state.x] === undefined) { history[state.x] = [] }
               if (history[state.x][state.y] === undefined) {
                 history[state.x][state.y] = state.steps
-              } else if ( (history[state.x][state.y] < state.steps) ) { // drop paths longer than history
+              } else if (history[state.x][state.y] <= state.steps) { // drop paths longer than history TODO TEST <=
                 continue
+              } else {
+                history[state.x][state.y] = state.steps
               }
               var match = neighbours.find((n) => {
                 return n.x === state.x && n.y === state.y
               })
               if (match) {
                 shortestPath = state.steps < shortestPath ? state.steps : shortestPath
-                nearStates.push(state)
-                nearStates.sort((a,b) => {
-                  if (a.steps - b.steps !== 0) {
-                    return a.steps - b.steps
-                  } else {
-                    return (a.x - b.x) !== 0 ? (a.x - b.x) : (a.y - b.y)
-                  }
-                })
+                if (nearStates.find((n) => {
+                    return n.x === state.x && n.y === state.y && n.steps === state.steps
+                  }) === undefined) { // avoid duplicates
+                  nearStates.push(state)
+                }
               } else {
                 //generate next states
                 var genMoves = []
                 $.each(generateMoves(state), function(idx, gm) {
                   if (gm.steps <= shortestPath) { // include only paths shorter or equal than already found
+                    if (history[gm.x] && history[gm.x][gm.y] && history[gm.x][gm.y] <= gm.steps) { // drop paths longer than history TODO TEST <=
+                      return true
+                    }
+                    if (nextStates.find((other) => { // don't add repeated states. or at least repeated that have more steps
+                      return gm.x === other.x && gm.y === other.y && gm.steps > other.steps
+                    }) >= 0) { return true }
+                    // compare the current shortest path to the generated move
                     var remSteps = shortestPath - gm.steps
                     var currentToDest = (Math.abs(u.x - gm.x) + Math.abs(u.y - gm.y))
-                    if (currentToDest <= remSteps+1) { // only add if there's enough steps to reach in a straight path
+                    if (currentToDest <= remSteps+1) { // only add if there is a way to be shorter (straight path)
                       genMoves.push(gm)
                     }
                   }
+                })
+                genMoves.sort((a,b) => { // put the closer ones first
+                  var atou = (Math.abs(a.x - u.x) + Math.abs(a.y - u.y))
+                  var btou = (Math.abs(b.x - u.x) + Math.abs(b.y - u.y))
+                  return atou - btou
                 })
                 nextStates.push(...genMoves)
               }
@@ -246,7 +257,17 @@ var day15 = function() {
             if (a.steps - b.steps !== 0) {
               return a.steps - b.steps
             } else {
-              return (a.x - b.x) !== 0 ? (a.x - b.x) : (a.y - b.y)
+              var srcA = $.map(a.trace.split(':')[1].split(','), (n)=>{return Number(n)})
+              var srcB = $.map(b.trace.split(':')[1].split(','), (n)=>{return Number(n)})
+              if (srcA[0] === srcB[0]) {
+                if (srcA[1] === srcB[1]) {
+                  return (a.x - b.x) !== 0 ? (a.x - b.x) : (a.y - b.y)
+                } else {
+                  return srcA[1] - srcB[1]
+                }
+              } else {
+                return srcA[0] - srcB[0]
+              }
             }
           })
           // Chosen
@@ -338,6 +359,7 @@ var day15 = function() {
       queue.push(...remaining)
       printGrid(grid)
       // console.log(units)
+      // console.log('round',round)
     }
     if (round >= limit) {
       console.log('round limit exceeded')
@@ -349,6 +371,14 @@ var day15 = function() {
       return acc + val.hp
     }, 0)
     console.log(round, outcome)
+    // 203426
+    // CORRECT
+    // Ans=206720 HP=2720 EAP=3 Rounds=76
+    // 207150 wrong
+    // 220806 wrong
+    // 233835 too high
+    // 246729 too high
+    // 286858 too high
 
     $('#day15').append(input[i])
       .append('<br>&emsp;')
