@@ -252,7 +252,9 @@ var day17 = function() {
       // }
     }
     // printGrid(grid,minX,maxX,minY,maxY)
+    printGrid2(grid,minX,maxX,minY,maxY)
     // countTiles(grid,minX,maxX,minY,maxY-1)
+
 
     var tiles = grid.reduce((accx, valx) => {
       return accx + valx.reduce((accy, valy) => {
@@ -273,6 +275,7 @@ var day17 = function() {
     // 38424 too low
     // 38451 correct. why?
     // 38453 too high
+    // compare with this
 
     $('#day17').append(input[i])
       .append('<br>&emsp;')
@@ -294,6 +297,16 @@ var printGrid = function(grid, x0, xn, y0, yn) {
   var outString = ''
   for (var i = x0; i <= xn; i++) {
     for (var j = y0; j <= yn; j++) {
+      outString += grid[i][j]
+    }
+    outString += '\n'
+  }
+  console.log(outString)
+}
+var printGrid2 = function(grid, x0, xn, y0, yn) {
+  var outString = ''
+  for (var j = y0; j <= yn; j++) {
+    for (var i = x0; i <= xn; i++) {
       outString += grid[i][j]
     }
     outString += '\n'
