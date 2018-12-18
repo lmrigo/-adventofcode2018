@@ -20,6 +20,7 @@ var day17 = function() {
     grid[500] = []
     grid[500][0] = '+' // spring of water
     var minX=500,minY=0,maxX=500,maxY=0
+    var minScanY=100000
     $.each(lines, (idx, line) => {
       var rawIn = line.split(', ')
       if (rawIn[0].startsWith('x')) { // vertical
@@ -34,6 +35,7 @@ var day17 = function() {
         minX = minX < x ? minX : x
         maxX = maxX > x ? maxX : x
         minY = minY < rangeY[0] ? minY : rangeY[0]
+        minScanY = minScanY < rangeY[0] ? minScanY : rangeY[0]
         maxY = maxY > rangeY[1] ? maxY : rangeY[1]
       } else { // horizontal
         var y = Number(rawIn[0].substr(2))
@@ -45,6 +47,7 @@ var day17 = function() {
           grid[x][y] = '#'
         }
         minY = minY < y ? minY : y
+        minScanY = minScanY < y ? minScanY : y
         maxY = maxY > y ? maxY : y
         minX = minX < rangeX[0] ? minX : rangeX[0]
         maxX = maxX > rangeX[1] ? maxX : rangeX[1]
@@ -252,15 +255,16 @@ var day17 = function() {
       // }
     }
     // printGrid(grid,minX,maxX,minY,maxY)
-    printGrid2(grid,minX,maxX,minY,maxY)
-    // countTiles(grid,minX,maxX,minY,maxY-1)
+    // printGrid2(grid,minX,maxX,minY,maxY)
 
+    // var tiles = grid.reduce((accx, valx) => {
+    //   return accx + valx.reduce((accy, valy) => {
+    //     return accy + ((valy==='|' || valy==='~') ? 1 : 0)
+    //   }, 0)
+    // }, 0)
+    // the above code counts tiles above the minimum scanned Y
+    var tiles = countTiles(grid,minX,maxX,minScanY,maxY)
 
-    var tiles = grid.reduce((accx, valx) => {
-      return accx + valx.reduce((accy, valy) => {
-        return accy + ((valy==='|' || valy==='~') ? 1 : 0)
-      }, 0)
-    }, 0)
     // for part 2
     waters[i] = grid.reduce((accx, valx) => {
       return accx + valx.reduce((accy, valy) => {
@@ -273,7 +277,7 @@ var day17 = function() {
     }
 
     // 38424 too low
-    // 38451 correct. why?
+    // 38451 correct. why? there was 2 tiles flowing from the spring that were above the minimum scanned Y
     // 38453 too high
     // compare with this
 
@@ -321,7 +325,8 @@ var countTiles = function(grid, x0, xn, y0, yn) {
       counter += ((grid[i][j]==='|' || grid[i][j]==='~') ? 1 : 0)
     }
   }
-  console.log(counter)
+  // console.log(counter)
+  return counter
 }
 
 
