@@ -10,6 +10,8 @@ y=13, x=498..504`,
  puzzleInput
 ]
 
+var waters = []
+
 var day17 = function() {
 
   for (var i = 0; i < input.length; i++) {
@@ -64,7 +66,7 @@ var day17 = function() {
     // console.log(grid)
     // printGrid(grid,minX,maxX,minY,maxY)
 
-    // make the water flow
+     // make the water flow
     var initialState = {'x': 500, 'y':1}
     var nextStates = [initialState]
     var timeout = 1*1000*1000
@@ -249,11 +251,18 @@ var day17 = function() {
       //     grid[st.x+1][st.y-1]+grid[st.x+1][st.y+0]+grid[st.x+1][st.y+1])
       // }
     }
-    printGrid(grid,minX,maxX,minY,maxY)
-    countGridWater(grid,minX,maxX,minY,maxY)
+    // printGrid(grid,minX,maxX,minY,maxY)
+    // countTiles(grid,minX,maxX,minY,maxY-1)
+
     var tiles = grid.reduce((accx, valx) => {
       return accx + valx.reduce((accy, valy) => {
         return accy + ((valy==='|' || valy==='~') ? 1 : 0)
+      }, 0)
+    }, 0)
+    // for part 2
+    waters[i] = grid.reduce((accx, valx) => {
+      return accx + valx.reduce((accy, valy) => {
+        return accy + (valy==='~' ? 1 : 0)
       }, 0)
     }, 0)
 
@@ -262,7 +271,7 @@ var day17 = function() {
     }
 
     // 38424 too low
-
+    // 38451 correct. why?
     // 38453 too high
 
     $('#day17').append(input[i])
@@ -291,15 +300,17 @@ var printGrid = function(grid, x0, xn, y0, yn) {
   }
   console.log(outString)
 }
-var countGridWater = function(grid, x0, xn, y0, yn) {
+
+var countTiles = function(grid, x0, xn, y0, yn) {
   var counter = 0
   for (var i = x0; i <= xn; i++) {
     for (var j = y0; j <= yn; j++) {
-      counter += ('~|'.includes(grid[i][j])) ? 1 : 0
+      counter += ((grid[i][j]==='|' || grid[i][j]==='~') ? 1 : 0)
     }
   }
   console.log(counter)
 }
+
 
 var day17Part2 = function () {
 
@@ -307,7 +318,7 @@ var day17Part2 = function () {
 
     $('#part2').append(input[i])
       .append('<br>&emsp;')
-      .append()
+      .append(waters[i])
       .append('<br>')
   }
 
