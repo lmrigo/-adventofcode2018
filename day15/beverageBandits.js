@@ -130,6 +130,7 @@ var day15 = function() {
           round-=2 // not a full round
           queue = [] // clear the queue
           remaining = []
+          // it will still do another round with an empty queue then finish
           break
         }
         // play the unit
@@ -355,22 +356,27 @@ var day15 = function() {
           }
         } // end attack
 
-      } // end round
+      } // end queue
       queue.push(...remaining)
-      printGrid(grid)
-      // console.log(units)
-      // console.log('round',round)
-    }
+      if (queue.length > 0) {
+        printGrid(grid)
+        // console.log(units)
+        h = units.reduce((acc, val) => {
+          return acc + val.hp
+        }, 0)
+        console.log(round, h, round*h)
+      }
+    } // end round
     if (round >= limit) {
       console.log('round limit exceeded')
     }
     printGrid(grid)
 
-
-    var outcome = round * units.reduce((acc, val) => {
+    var health = units.reduce((acc, val) => {
       return acc + val.hp
     }, 0)
-    console.log(round, outcome)
+    var outcome = round * health
+    console.log(round, health, outcome)
     // 203426
     // CORRECT
     // Ans=206720 HP=2720 EAP=3 Rounds=76
