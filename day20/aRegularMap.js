@@ -13,6 +13,8 @@ function Node (parent) {
   this.path = ''
 }
 
+var distGrid // used for part 2 as well
+
 var day20 = function() {
 
   // for (var i = 0; i < 5; i++) {
@@ -119,7 +121,7 @@ var day20 = function() {
     // find the distances to all rooms
     var initialState = {'x':me.x, 'y':me.y, 'steps':0, 'trace':':'+me.x+','+me.y}
     var nextStates = [initialState]
-    var distGrid = []
+    distGrid = []
     var timeout = 1000000
     while (nextStates.length > 0 && --timeout) {
       var st = nextStates.shift()
@@ -197,21 +199,19 @@ var printGrid2 = function(grid, x0, xn, y0, yn) {
   console.log(outString)
 }
 
-var copyGrid = function(original) {
-  var copy = []
-  $.each(original, (idx, line) => {
-    copy[idx] = line.slice()
-  })
-  return copy
-}
-
 var day20Part2 = function () {
 
-  for (var i = 0; i < input.length; i++) {
+  for (var i = input.length-1; i < input.length; i++) {
+    // How many rooms have a shortest path from your current location that pass through at least 1000 doors?
+    var numRoomsFurthestThanThousand = distGrid.reduce((accx, valx) => {
+        return accx + valx.reduce((accy, valy) => {
+          return accy + (valy >= 1000 ? 1 : 0)
+        }, 0)
+      }, 0)
 
     $('#part2').append(input[i])
       .append('<br>&emsp;')
-      .append()
+      .append(numRoomsFurthestThanThousand)
       .append('<br>')
   }
 
