@@ -1,7 +1,7 @@
 var input = [
 `depth: 510
 target: 10,10`,
- // puzzleInput
+ puzzleInput
 ]
 
 function Region (x=-1, y=-1, geoIndex=-1, erosion=-1, type=-1) {
@@ -119,7 +119,7 @@ var day22Part2 = function () {
     var targetY = Number(targetCoordinates.split(',')[1])
     var types = ['rocky','wet','narrow']
 
-    var additionalTiles = 3 // TODO: find out the best value. Tiles added in case the best path goes further from the target and then returns.
+    var additionalTiles = 20 // TODO: find out the best value. Tiles added in case the best path goes further from the target and then returns.
     var gridSize = (targetX > targetY ? targetX : targetY) + additionalTiles // using caveDepth makes the program run out of memory
     cave = [] // keep only the types information in here
     while (true) {
@@ -170,22 +170,27 @@ var day22Part2 = function () {
     // In wet regions, you can use the climbing gear or neither tool.
     // In narrow regions, you can use the torch or neither tool.
 
-    var shortestPath = gridSize*3
+    var shortestPath = gridSize*70
     var initialState = {'x': 0, 'y':0,'minutes':0,'gear':'T','trace':'T'+0+','+0}
     var history = []
     var possiblePaths = [] //TODO: might be unnecessary. just find the best one.
     var nextStates = [initialState]
-    var timeout = 100000
+    var timeout = 10000000
+    var globalTrace = {}
     while (nextStates.length > 0 && --timeout) {
-      var st = nextStates.shift()
+      var st = nextStates.shift() // generating too many states
       if (history[st.x] === undefined) { history[st.x] = [] }
       if (history[st.x][st.y] === undefined) {
         history[st.x][st.y] = st.minutes
-      } else if (history[st.x][st.y] <= st.minutes) { // drop paths longer than history TODO TEST <=
+      } else if (history[st.x][st.y]+7 < st.minutes) { // drop paths longer than history TODO TEST <=
         continue
       } else {
-        history[st.x][st.y] = st.minutes
+        history[st.x][st.y] = history[st.x][st.y] < st.minutes ? history[st.x][st.y] : st.minutes
       }
+      if (globalTrace[genTrace(st)]) {
+        continue
+      }
+      globalTrace[genTrace(st)] = true
       if (st.x === targetX && st.y === targetY) { // found
         shortestPath = st.minutes < shortestPath ? st.minutes : shortestPath
         possiblePaths.push(st)
@@ -193,11 +198,11 @@ var day22Part2 = function () {
         //generate next states
         var genMoves = []
         $.each(generateMoves(st), function(idx, gm) {
-          if (gm.steps <= shortestPath) { // include only paths shorter or equal than already found
-            if (history[gm.x] && history[gm.x][gm.y] && history[gm.x][gm.y] <= gm.minutes+7) { // drop paths longer than history TODO TEST 7 for change gear
+          if (gm.minutes <= shortestPath) { // include only paths shorter or equal than already found
+            if (history[gm.x] && history[gm.x][gm.y] && history[gm.x][gm.y]+7 < gm.minutes) { // drop paths longer than history TODO TEST 7 for change gear
               return true
             }
-            // TODO: optimization: don't add repeated states. or at least repeated that have more steps
+            // TODO: optimization: don't add repeated states. or at least repeated that have more minutes
             // compare the current shortest path to the generated move
             genMoves.push(gm)
           }
@@ -214,13 +219,15 @@ var day22Part2 = function () {
     if (!timeout) {
       console.log('timeout!')
     }
-    console.log(possiblePaths)
+    console.log(history[0].length)
 
     possiblePaths.sort((a,b)=> {
       return a.minutes - b.minutes
     })
+    console.log(possiblePaths)
 
     var minMinutes = possiblePaths[0].minutes
+    // 1266 too high
 
     $('#part2').append(input[i])
       .append('<br>&emsp;')
