@@ -8,6 +8,12 @@ pos=<0,0,3>, r=1
 pos=<1,1,1>, r=1
 pos=<1,1,2>, r=1
 pos=<1,3,1>, r=1`,
+`pos=<10,12,12>, r=2
+pos=<12,14,12>, r=2
+pos=<16,12,12>, r=4
+pos=<14,14,14>, r=6
+pos=<50,50,50>, r=200
+pos=<10,10,10>, r=5`,
  puzzleInput
 ]
 
@@ -46,9 +52,11 @@ var day23Part2 = function () {
 
   for (var i = 0; i < input.length; i++) {
 
+    var coord = {x:0,y:0,z:0} //TODO: assign the coordinate that is in range of the largest number of bots
+    var coordDist = Math.abs(coord.x - 0) + Math.abs(coord.y - 0) + Math.abs(coord.z - 0)
     $('#part2').append(input[i])
       .append('<br>&emsp;')
-      .append()
+      .append(coordDist)
       .append('<br>')
   }
 }
