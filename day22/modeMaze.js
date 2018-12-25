@@ -176,7 +176,7 @@ var day22Part2 = function () {
     var bestPath = {}
     var nextStates = [initialState]
     var timeout = 1000000
-    var globalTrace = {}
+    var globalTrace = {} // TODO: reimplement history to reduce the number of repeated steps
     var history = []
     while (nextStates.length > 0 && --timeout) {
       var st = nextStates.shift() // generating too many states
@@ -204,15 +204,15 @@ var day22Part2 = function () {
             genMoves.push(gm)
           }
         })
-        // TODO: optimization:
-        genMoves.sort((a,b) => { // put the closer ones first
+
+        genMoves.sort((a,b) => { // TODO: optimization: put the closer ones first
           var atot = (Math.abs(a.x - targetX) + Math.abs(a.y - targetY))
           var btot = (Math.abs(b.x - targetX) + Math.abs(b.y - targetY))
           return atot - btot
         })
-        genMoves.sort((b,a) => { // TODO: testing: put the furthest ones first
-          return a.minutes - b.minutes
-        })
+        // genMoves.sort((b,a) => { // TODO: testing: put the furthest ones first
+        //   return a.minutes - b.minutes
+        // })
         nextStates.push(...genMoves)
       }
     }
