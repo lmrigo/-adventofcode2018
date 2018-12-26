@@ -1,7 +1,7 @@
 var input = [
 `depth: 510
 target: 10,10`,
- // puzzleInput
+ puzzleInput
 ]
 
 function Region (x=-1, y=-1, geoIndex=-1, erosion=-1, type=-1) {
@@ -108,6 +108,7 @@ var printCave = function(cave, x0, xn, y0, yn) {
 }
 
 var cave = []
+globalTrace = {}
 
 var day22Part2 = function () {
 
@@ -119,7 +120,7 @@ var day22Part2 = function () {
     var targetY = Number(targetCoordinates.split(',')[1])
     var types = ['rocky','wet','narrow']
 
-    var additionalTiles = i===0?3:50 // TODO: find out the best value. Tiles added in case the best path goes further from the target and then returns.
+    var additionalTiles = i===0?3:40 // Tiles added in case the best path goes further from the target and then returns.
     var gridSizeX = targetX + additionalTiles
     var gridSizeY = targetY + additionalTiles
     cave = [] // keep only the types information in here
@@ -175,13 +176,13 @@ var day22Part2 = function () {
     var initialState = {'x': 0, 'y':0,'minutes':0,'gear':'T','trace':'T'+0+','+0}
     var bestPath = {}
     var nextStates = [initialState]
-    var timeout = 1000000
-    var globalTrace = {} // TODO: reimplement history to reduce the number of repeated steps
+    var timeout = 10000000
+    globalTrace = {}
     var history = []
     while (nextStates.length > 0 && --timeout) {
       var st = nextStates.shift() // generating too many states
       var tr = genTrace(st)
-      if (globalTrace[tr] && globalTrace[tr] < st.minutes) {
+      if (globalTrace[tr] && globalTrace[tr] <= st.minutes) {
         continue
       }
       globalTrace[tr] = st.minutes
@@ -205,11 +206,11 @@ var day22Part2 = function () {
           }
         })
 
-        genMoves.sort((a,b) => { // TODO: optimization: put the closer ones first
-          var atot = (Math.abs(a.x - targetX) + Math.abs(a.y - targetY))
-          var btot = (Math.abs(b.x - targetX) + Math.abs(b.y - targetY))
-          return atot - btot
-        })
+        // genMoves.sort((a,b) => { // TODO: optimization: put the closer ones first
+        //   var atot = (Math.abs(a.x - targetX) + Math.abs(a.y - targetY))
+        //   var btot = (Math.abs(b.x - targetX) + Math.abs(b.y - targetY))
+        //   return atot - btot
+        // })
         // genMoves.sort((b,a) => { // TODO: testing: put the furthest ones first
         //   return a.minutes - b.minutes
         // })
@@ -219,10 +220,12 @@ var day22Part2 = function () {
     if (!timeout) {
       console.log('timeout!')
     }
-    console.log(history)
-    console.log(bestPath)
+    // console.log(history)
+    // console.log(bestPath)
 
     var minMinutes = shortestPath + (bestPath.gear !== 'T' ? 7 : 0) // switch to torch
+    // 984 CORRECT!
+    // 986 too high
     // 1266 too high
 
     $('#part2').append(input[i])
